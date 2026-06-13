@@ -5,6 +5,7 @@ import 'screens/login_screen.dart';
 import 'screens/campaign_list_screen.dart';
 import 'screens/game_screen.dart';
 import 'screens/character_screen.dart';
+import 'screens/vision_archive_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -78,7 +79,8 @@ class ImmersiveStoriesApp extends StatelessWidget {
         '/login': (context) => const LoginScreen(),
         '/campaigns': (context) => const CampaignListScreen(),
         '/game': (context) => const GameScreen(),
-        '/character': (context) => const CharacterScreen(),
+        '/character':      (context) => const CharacterScreen(),
+        '/vision_archive': (context) => const VisionArchiveScreen(),
       },
     );
   }

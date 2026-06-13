@@ -281,7 +281,17 @@ class _GameScreenState extends State<GameScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (_) => _CampaignDetailSheet(campaignId: _campaignId),
+      builder: (_) => _CampaignDetailSheet(
+        campaignId: _campaignId,
+        onVisionArchiveTap: () {
+          Navigator.pop(context);
+          Navigator.pushNamed(
+            context,
+            '/vision_archive',
+            arguments: {'campaign_id': _campaignId},
+          );
+        },
+      ),
     );
   }
 
@@ -304,7 +314,7 @@ class _GameScreenState extends State<GameScreen> {
           ),
           onInventoryTap: () => _snack('Inventory — coming soon'),
           onShopTap:      () => _snack('Shop — coming soon'),
-          onCurrencyTap:  () => _snack('Vision Tokens · Vision Credits'),
+          onCurrencyTap:  () => _snack('Vision Credits'),
         ),
       ),
       resizeToAvoidBottomInset: true,
@@ -526,6 +536,11 @@ class _CurrencyPill extends StatelessWidget {
 
   const _CurrencyPill({required this.tokens, required this.visionCredits, required this.onTap});
 
+  // Vision Tokens zatím nemají backend (existují jen Vision Credits).
+  // Skryto, aby se nezobrazoval zavádějící hardcoded 0. Přepni na true,
+  // až bude token balance endpoint hotový.
+  static const bool _showVisionTokens = false;
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -540,10 +555,12 @@ class _CurrencyPill extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _CurrencyItem(asset: 'assets/icons/token.png',         value: tokens),
-          const SizedBox(width: 2),
-          Container(width: 1, height: 14, color: const Color(0xFF2A2A4E)),
-          const SizedBox(width: 2),
+          if (_showVisionTokens) ...[
+            _CurrencyItem(asset: 'assets/icons/token.png', value: tokens),
+            const SizedBox(width: 2),
+            Container(width: 1, height: 14, color: const Color(0xFF2A2A4E)),
+            const SizedBox(width: 2),
+          ],
           _CurrencyItem(asset: 'assets/icons/vision_credit.png', value: visionCredits),
         ],
       ),
@@ -585,7 +602,8 @@ class _CurrencyItem extends StatelessWidget {
 
 class _CampaignDetailSheet extends StatelessWidget {
   final String? campaignId;
-  const _CampaignDetailSheet({required this.campaignId});
+  final VoidCallback? onVisionArchiveTap;
+  const _CampaignDetailSheet({required this.campaignId, this.onVisionArchiveTap});
 
   @override
   Widget build(BuildContext context) {
@@ -613,8 +631,33 @@ class _CampaignDetailSheet extends StatelessWidget {
           _DetailRow(label: 'Šablona',          value: 'Adventurer'),
           _DetailRow(label: 'Svět',              value: 'II'),
           _DetailRow(label: 'Aktuální lokace',   value: 'Crossroads Inn'),
-          _DetailRow(label: 'Poslední uložení',  value: '—'),   // TODO: Phase 2 — timestamp z campaign
-          const SizedBox(height: 8),
+          _DetailRow(label: 'Poslední uložení',  value: '—'),
+          const SizedBox(height: 16),
+          const Divider(color: Color(0xFF2A2A4E), height: 1),
+          const SizedBox(height: 4),
+          InkWell(
+            onTap: onVisionArchiveTap,
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Row(
+                children: [
+                  Image.asset(
+                    'assets/icons/gallery.png',
+                    width: 20, height: 20,
+                    errorBuilder: (_, __, ___) => const Icon(Icons.photo_library_outlined, color: Color(0xFFC8A96E), size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'Vision Archive',
+                    style: TextStyle(color: Color(0xFFC8A96E), fontSize: 14, fontWeight: FontWeight.w600),
+                  ),
+                  const Spacer(),
+                  const Icon(Icons.chevron_right, color: Color(0xFF4A4A6A), size: 18),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );

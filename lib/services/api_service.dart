@@ -56,6 +56,20 @@ class ApiService {
     );
   }
 
+  Future<List<dynamic>> getCampaignVisuals(String campaignId) async {
+    final response = await http.get(
+      Uri.parse('${AppConfig.apiBaseUrl}/campaign/$campaignId/visuals'),
+      headers: _headers,
+    );
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return jsonDecode(response.body) as List<dynamic>;
+    }
+    throw ApiException(
+      statusCode: response.statusCode,
+      message: _tryParseError(response.body),
+    );
+  }
+
   Future<Map<String, dynamic>> getCreditsBalance() async {
     final response = await http.get(
       Uri.parse('${AppConfig.apiBaseUrl}/credits/balance'),
