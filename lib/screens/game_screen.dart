@@ -53,15 +53,20 @@ class _GameScreenState extends State<GameScreen> {
 
   // Pending visualizer po dokončení typewriteru
   String? _pendingVisualizerEventId;
-  bool    _debugForceVisualizer = true; // TODO: odstranit po Phase 2B
 
   String? _campaignId;
 
-  // Hardcoded pro MVP-0 — Phase 2 načte ze server dat
-  static const _locationName  = 'Crossroads Inn';
+  // Live state — načítá se ze serveru
+  String _locationName  = 'Crossroads Inn';
+  int    _visionCredits = 0;
+  int    _tokens        = 0;
   static const _worldInstance = 'Svět II';
-  static const _tokens        = 0;
-  static const _visionCredits = 0;
+
+  // Mapa location_id → čitelný název (MVP-0)
+  static const _locationNames = <String, String>{
+    'crossroads_inn':      'Crossroads Inn',
+    'crossroads_exterior': 'Crossroads Exterior',
+  };
 
   @override
   void initState() {
@@ -76,10 +81,38 @@ class _GameScreenState extends State<GameScreen> {
       debugPrint('[GameScreen] campaignId resolved: $_campaignId');
       if (_campaignId != null) {
         _loadHistory(_campaignId!);
+        _loadCampaignState(_campaignId!);
       } else {
         if (mounted) setState(() => _loadingHistory = false);
       }
+      _loadCredits();
     });
+  }
+
+  Future<void> _loadCredits() async {
+    try {
+      final result = await _api.getCreditsBalance();
+      if (!mounted) return;
+      setState(() {
+        _visionCredits = (result['balance'] as num?)?.toInt() ?? 0;
+      });
+    } catch (e) {
+      debugPrint('[GameScreen] _loadCredits ERROR: $e');
+    }
+  }
+
+  Future<void> _loadCampaignState(String campaignId) async {
+    try {
+      final result = await _api.loadCampaign(campaignId);
+      if (!mounted) return;
+      final snapshotJson = result['snapshot_json'] as Map<String, dynamic>?;
+      final playerState  = snapshotJson?['player_state'] as Map<String, dynamic>?;
+      final locationId   = playerState?['location_id']?.toString() ?? '';
+      final name = _locationNames[locationId];
+      if (name != null) setState(() => _locationName = name);
+    } catch (e) {
+      debugPrint('[GameScreen] _loadCampaignState ERROR: $e');
+    }
   }
 
   Future<void> _loadHistory(String campaignId) async {
@@ -147,11 +180,13 @@ class _GameScreenState extends State<GameScreen> {
     _scrollToBottom();
     try {
       final result = await _api.generateVision(eventId);
-      final imageUrl = result['image_url']?.toString() ?? '';
+      final imageUrl        = result['image_url']?.toString() ?? '';
+      final remaining       = (result['remaining_credits'] as num?)?.toInt();
       if (!mounted) return;
       setState(() {
         _visionImages[eventId] = imageUrl;
         _visionState[eventId]  = 'done';
+        if (remaining != null) _visionCredits = remaining;
       });
       _scrollToBottom();
     } catch (e) {
@@ -177,8 +212,22 @@ class _GameScreenState extends State<GameScreen> {
       final result = await _api.sendAction(campaignId: _campaignId!, action: text);
       final narrative  = result['narrative'] as String? ?? result['response'] as String? ?? '';
       final eventId    = result['event_id']?.toString();
-      final vizAvail   = (result['visualizer_available'] as bool? ?? false)
-                         || _debugForceVisualizer;  // TODO: odstranit _debugForceVisualizer
+      final vizAvail   = result['visualizer_available'] as bool? ?? false;
+
+      // Aktualizuj lokaci z ui_delta pokud server vrátil přesun hráče.
+      // Backend posílá MOVE_ENTITY delta: {type:"MOVE_ENTITY", target_id, value:<nová_lokace>}.
+      // Nová location_id je v `value`, ne v `location_id` (to pole neexistuje).
+      final uiDelta = result['ui_delta'] as List<dynamic>?;
+      if (uiDelta != null) {
+        for (final delta in uiDelta) {
+          if (delta is Map<String, dynamic> && delta['type'] == 'MOVE_ENTITY') {
+            final newLocationId = delta['value']?.toString() ?? '';
+            final newName = _locationNames[newLocationId];
+            if (newName != null && mounted) setState(() => _locationName = newName);
+          }
+        }
+      }
+
       if (mounted) {
         setState(() {
           _showTypingIndicator = false;

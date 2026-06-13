@@ -56,6 +56,14 @@ class ApiService {
     );
   }
 
+  Future<Map<String, dynamic>> getCreditsBalance() async {
+    final response = await http.get(
+      Uri.parse('${AppConfig.apiBaseUrl}/credits/balance'),
+      headers: _headers,
+    );
+    return _parse(response);
+  }
+
   Future<Map<String, dynamic>> generateVision(String eventId) async {
     final response = await http.post(
       Uri.parse('${AppConfig.apiBaseUrl}/visualize/$eventId'),
