@@ -1,17 +1,39 @@
-# immersive_stories_flutter
+# Immersive Stories: mobilní klient
 
-A new Flutter project.
+Flutter aplikace pro textové fantasy RPG [Immersive Stories](https://github.com/konvaa/immersive-stories-api).
+Hráč se přihlásí, založí nebo načte kampaň, zadává akce a čte narativ,
+který generuje backend (deterministický engine + AI narace). Scény jde
+nechat vizualizovat a prohlížet v archivu vizí.
 
-## Getting Started
+> **Stav: on hold.** Vývoj je pozastavený a backend, na který aplikace
+> ve výchozím stavu míří, momentálně neběží.
 
-This project is a starting point for a Flutter application.
+## Stack
 
-A few resources to get you started if this is your first Flutter project:
+- **Flutter / Dart** (SDK ^3.11)
+- **supabase_flutter**: přihlášení; access token se posílá backendu jako Bearer
+- **http**: volání REST API backendu (`lib/services/api_service.dart`)
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+## Konfigurace
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Veškerá konfigurace je v [`lib/config.dart`](lib/config.dart):
+
+| Konstanta | Význam |
+|---|---|
+| `apiBaseUrl` | URL backendu (FastAPI). Lokálně např. `http://10.0.2.2:8000` pro Android emulátor. |
+| `supabaseUrl` | URL Supabase projektu |
+| `supabaseAnonKey` | Supabase **publishable** klíč |
+
+Publishable klíč je veřejný z principu, skončí v každé sestavené aplikaci.
+Data chrání Row Level Security v Supabase. Do klienta nikdy nepatří secret
+ani service_role klíč.
+
+## Spuštění
+
+```sh
+flutter pub get
+flutter run
+```
+
+Předpoklad: běžící backend na adrese z `apiBaseUrl` a Supabase projekt se
+schématem z backendového repozitáře.

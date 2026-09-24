@@ -45,3 +45,17 @@ app.*.map.json
 /android/app/release
 
 GDD/
+
+# --- Doplněno 2026-09-24 (preventivně) ---
+# Proměnné prostředí - aplikace je teď nepoužívá (konfigurace je v lib/config.dart).
+.env*
+!.env.example
+
+# Podpis release buildu: hesla a keystore nikdy do repozitáře.
+android/key.properties
+*.jks
+*.keystore
+
+# Firebase konfigurace vázaná na konkrétní projekt (pokud se Firebase přidá).
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
